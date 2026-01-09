@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Senior Lecturer Promotion – Interactive Checklist</title>
+  <style>
+    :root{
+      --bg:#f5f7fa;
+      --card:#ffffff;
+      --muted:#64748b;
+      --text:#1e293b;
+      --accent:#3b82f6;
+      --accent2:#10b981;
+      --danger:#ef4444;
+      --border: rgba(0,0,0,.12);
+      --shadow: 0 4px 20px rgba(0,0,0,.08);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(59,130,246,.12), transparent 55%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(16,185,129,.08), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family:var(--sans);
+      line-height:1.4;
+    }
+    header{
+      position:sticky; top:0;
+      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,.85);
+      border-bottom:1px solid var(--border);
+      z-index:10;
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:18px 18px;}
+    .top{
+      display:flex; gap:14px; align-items:center; justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0; font-size:18px; letter-spacing:.2px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:4px;
+    }
+    .controls{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .btn{
+      border:1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      transition: .15s ease;
+      font-size:13px;
+      display:inline-flex; gap:8px; align-items:center;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); background: #fafafa; box-shadow: 0 2px 6px rgba(0,0,0,.08);}
+    .btn:active{ transform: translateY(0px); }
+    .btn.danger{ border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.08); color: #dc2626; }
+    .btn.primary{ border-color: rgba(59,130,246,.4); background: rgba(59,130,246,.08); color: #2563eb; }
+    .btn.ok{ border-color: rgba(16,185,129,.4); background: rgba(16,185,129,.08); color: #059669; }
+
+    .search{
+      border:1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      font-size:13px;
+      min-width: 240px;
+      outline: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .search:focus{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 18px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+    .stats{
+      background: #ffffff;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .bar{
+      flex: 1 1 360px;
+      height: 10px;
+      border-radius: 99px;
+      border:1px solid var(--border);
+      background: #f1f5f9;
+      overflow:hidden;
+      min-width: 240px;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width .25s ease;
+    }
+    .statline{
+      display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      border:1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f8fafc;
+      color: var(--text);
+      font-size: 12px;
+    }
+    
+    /* Section count pills */
+    [data-section="core"] .sec-count .pill{ background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.3); color: #1e40af; font-weight: 600; }
+    [data-section="eligibility"] .sec-count .pill{ background: rgba(168,85,247,.15); border-color: rgba(168,85,247,.3); color: #6b21a8; font-weight: 600; }
+    [data-section="teaching"] .sec-count .pill{ background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.3); color: #065f46; font-weight: 600; }
+    [data-section="research"] .sec-count .pill{ background: rgba(249,115,22,.15); border-color: rgba(249,115,22,.3); color: #9a3412; font-weight: 600; }
+    [data-section="service"] .sec-count .pill{ background: rgba(244,63,94,.15); border-color: rgba(244,63,94,.3); color: #9f1239; font-weight: 600; }
+    [data-section="enhancers"] .sec-count .pill{ background: rgba(234,179,8,.15); border-color: rgba(234,179,8,.3); color: #854d0e; font-weight: 600; }
+    [data-section="final"] .sec-count .pill{ background: rgba(6,182,212,.15); border-color: rgba(6,182,212,.3); color: #155e75; font-weight: 600; }
+
+    details.section{
+      background: #ffffff;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    details.section[open] summary{ border-bottom:1px solid var(--border); }
+    
+    /* Section-specific colors */
+    details.section[data-section="core"]{
+      background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+      border-color: rgba(59,130,246,.25);
+    }
+    details.section[data-section="eligibility"]{
+      background: linear-gradient(135deg, #e9d5ff 0%, #f3e8ff 100%);
+      border-color: rgba(168,85,247,.25);
+    }
+    details.section[data-section="teaching"]{
+      background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+      border-color: rgba(16,185,129,.25);
+    }
+    details.section[data-section="research"]{
+      background: linear-gradient(135deg, #fed7aa 0%, #fff7ed 100%);
+      border-color: rgba(249,115,22,.25);
+    }
+    details.section[data-section="service"]{
+      background: linear-gradient(135deg, #fecdd3 0%, #fff1f2 100%);
+      border-color: rgba(244,63,94,.25);
+    }
+    details.section[data-section="enhancers"]{
+      background: linear-gradient(135deg, #fef08a 0%, #fefce8 100%);
+      border-color: rgba(234,179,8,.25);
+    }
+    details.section[data-section="final"]{
+      background: linear-gradient(135deg, #a5f3fc 0%, #ecfeff 100%);
+      border-color: rgba(6,182,212,.25);
+    }
+    summary{
+      cursor:pointer;
+      padding: 14px 14px;
+      list-style:none;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+      user-select:none;
+    }
+    summary::-webkit-details-marker{display:none}
+    .sec-title{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .sec-title strong{font-size:14px}
+    .sec-title span{font-size:12px;color:var(--muted)}
+    .sec-count{
+      display:flex; gap:8px; align-items:center; color:var(--muted); font-size:12px;
+    }
+    .tasks{ padding: 10px 14px 14px; display:flex; flex-direction:column; gap:10px; }
+    .task{
+      border:1px solid var(--border);
+      background: #fafafa;
+      border-radius: 14px;
+      padding: 12px;
+      display:grid;
+      grid-template-columns: 22px 1fr auto;
+      gap: 10px;
+      align-items:flex-start;
+    }
+    .task.done{
+      opacity:.92;
+      background: rgba(16,185,129,.08);
+      border-color: rgba(16,185,129,.3);
+    }
+    
+    /* Task colors matching their sections */
+    [data-section="core"] .task{ background: rgba(219,234,254,.35); border-color: rgba(59,130,246,.2); }
+    [data-section="eligibility"] .task{ background: rgba(233,213,255,.35); border-color: rgba(168,85,247,.2); }
+    [data-section="teaching"] .task{ background: rgba(209,250,229,.35); border-color: rgba(16,185,129,.2); }
+    [data-section="research"] .task{ background: rgba(254,215,170,.35); border-color: rgba(249,115,22,.2); }
+    [data-section="service"] .task{ background: rgba(254,205,211,.35); border-color: rgba(244,63,94,.2); }
+    [data-section="enhancers"] .task{ background: rgba(254,240,138,.35); border-color: rgba(234,179,8,.2); }
+    [data-section="final"] .task{ background: rgba(165,243,252,.35); border-color: rgba(6,182,212,.2); }
+    
+    [data-section="core"] .task.done{ background: rgba(16,185,129,.15); }
+    [data-section="eligibility"] .task.done{ background: rgba(16,185,129,.15); }
+    [data-section="teaching"] .task.done{ background: rgba(16,185,129,.2); }
+    [data-section="research"] .task.done{ background: rgba(16,185,129,.15); }
+    [data-section="service"] .task.done{ background: rgba(16,185,129,.15); }
+    [data-section="enhancers"] .task.done{ background: rgba(16,185,129,.15); }
+    [data-section="final"] .task.done{ background: rgba(16,185,129,.15); }
+    .task input[type="checkbox"]{
+      width:18px;height:18px;margin-top:2px;
+      accent-color: var(--accent2);
+      cursor:pointer;
+    }
+    .task-title{
+      font-size: 13px;
+    }
+    .task-meta{
+      margin-top:6px;
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .note-box{
+      margin-top:10px;
+      border:1px dashed rgba(100,116,139,.3);
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 10px;
+      display:none;
+      white-space:pre-wrap;
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--text);
+    }
+    .note-box.show{ display:block; }
+    .actions{
+      display:flex; gap:8px; align-items:center;
+    }
+    .mini{
+      font-size:12px;
+      padding:8px 10px;
+      border-radius: 10px;
+      border:1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+    }
+    .mini:hover{ background: #f8fafc; }
+    .mini.note{ border-color: rgba(59,130,246,.4); background: rgba(59,130,246,.08); color: #2563eb; }
+    .mini.clear{ border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.08); color: #dc2626; }
+
+    dialog{
+      border:1px solid var(--border);
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--text);
+      width:min(720px, 94vw);
+      box-shadow: 0 20px 50px rgba(0,0,0,.15);
+      padding:0;
+    }
+    dialog::backdrop{ background: rgba(0,0,0,.4); }
+    .modal-head{
+      padding: 14px 14px 10px;
+      border-bottom:1px solid var(--border);
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+    }
+    .modal-head h3{ margin:0; font-size:14px; }
+    .modal-body{ padding: 12px 14px 14px; }
+    textarea{
+      width:100%;
+      min-height: 140px;
+      resize: vertical;
+      border:1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px;
+      font-family: var(--sans);
+      font-size: 13px;
+      outline:none;
+    }
+    textarea:focus{
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+    }
+    .modal-foot{
+      padding: 12px 14px 14px;
+      border-top:1px solid var(--border);
+      display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
+    }
+    .smallhint{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top:8px;
+      font-family: var(--mono);
+    }
+    .mono{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <div class="top">
+        <div>
+          <h1>Senior Lecturer Promotion – Interactive Document Checklist</h1>
+          <div class="sub">Tick items, add notes, and export your progress. Auto-saves on this device. | Designed by: Nazila Motahari</div>
+        </div>
+        <div class="controls">
+          <input id="search" class="search" placeholder="Search tasks (e.g., CCBL, CARs, IELTS)..." />
+          <button class="btn ok" id="expandAll">Expand all</button>
+          <button class="btn ok" id="collapseAll">Collapse all</button>
+          <button class="btn primary" id="exportBtn">Export JSON</button>
+          <button class="btn primary" id="importBtn">Import JSON</button>
+          <button class="btn danger" id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="stats">
+      <div class="bar" aria-label="Progress bar"><div id="barFill"></div></div>
+      <div class="statline">
+        <span class="pill"><span id="doneCount">0</span> done</span>
+        <span class="pill"><span id="totalCount">0</span> total</span>
+        <span class="pill"><span id="pct">0</span>%</span>
+        <span class="mono" id="savedStatus">Saved ✓</span>
+      </div>
+    </section>
+
+    <div id="sections"></div>
+  </main>
+
+  <dialog id="noteDialog">
+    <div class="modal-head">
+      <div>
+        <h3 id="noteTitle">Add notes</h3>
+        <div class="smallhint">Tip: jot evidence links, filenames, dates, or who can provide proof.</div>
+      </div>
+      <button class="mini" id="closeDialog">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="noteText" placeholder="Write your notes here..."></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger" id="deleteNote">Delete note</button>
+      <button class="btn primary" id="saveNote">Save note</button>
+    </div>
+  </dialog>
+
+  <dialog id="importDialog">
+    <div class="modal-head">
+      <div>
+        <h3>Import Progress (JSON)</h3>
+        <div class="smallhint">Paste your exported JSON here.</div>
+      </div>
+      <button class="mini" id="closeImport">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="importText" placeholder='{ "version": 1, "items": { ... } }'></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn primary" id="doImport">Import</button>
+    </div>
+  </dialog>
+
+  <script>
+    const DATA = [
+      {
+        id: "core",
+        title: "1. Core Application Documents",
+        subtitle: "Base documents you submit with the application",
+        items: [
+          { id:"cover_letter", label:"Cover Letter", detail:"Formal request for promotion + compiled list of all attachments" },
+          { id:"cv", label:"Current Curriculum Vitae (CV)", detail:"Updated; shows teaching, research, service, certifications, dates" },
+          { id:"declaration", label:"Signed Declaration", detail:"Not under investigation; no policy violation; no criminal conviction during evaluation year" },
+        ]
+      },
+      {
+        id: "eligibility",
+        title: "2. Eligibility Evidence (Must-Have)",
+        subtitle: "Non-negotiables — if these are missing, it hurts",
+        items: [
+          { id:"masters", label:"Master's Degree Certificate", detail:"From a reputable university + MOHESR equivalisation proof (very important)" },
+          { id:"service", label:"Proof of Service", detail:"Minimum 3 years full-time at HCT after Master's; minimum 3 years as Lecturer/Instructor" },
+          { id:"ccbl", label:"Certificate in Competency-Based Learning (CCBL)", detail:"Include certificate/verification" },
+          { id:"english_test", label:"Valid English Proficiency Test", detail:"IELTS or equivalent (as per institutional standards)" },
+          { id:"performance", label:"Performance Ratings", detail:"Minimum overall rating 3+; include last 3 performance cycles" },
+          { id:"workload", label:"Workload Evidence", detail:"Balanced workload over the last 3 academic semesters" },
+        ]
+      },
+      {
+        id: "teaching",
+        title: "3. PART A (1): Teaching Excellence – Evidence Folder",
+        subtitle: "Heaviest section. This is where applications win or fail.",
+        items: [
+          { id:"courses_3y", label:"Summary of courses taught (last 3 academic years)", detail:"List courses/levels/semesters" },
+          { id:"teaching_improvements", label:"Evidence of teaching improvements", detail:"Reflection on student & peer feedback; what changed; outcomes" },
+          { id:"teaching_pillar_ratings", label:"Teaching pillar performance ratings (last 3 cycles)", detail:"Include documentation" },
+          { id:"ai_integration", label:"Evidence of AI integration in teaching (last year)", detail:"Examples, screenshots, lesson artifacts, student outputs" },
+          { id:"class_observations", label:"Formal classroom observations (last 4 semesters)", detail:"Reports + follow-up actions" },
+          { id:"peer_observations", label:"Peer observation reports (last 2 semesters)", detail:"Reports + reflections" },
+          { id:"student_evals", label:"Student course evaluations (last 4 semesters) + reflection", detail:"Include summary + your response plan" },
+          { id:"ccbl_3courses", label:"Evidence of CCBL implementation in at least 3 different courses", detail:"Course plans, assessments, mapping" },
+          { id:"materials_dev", label:"Evidence of course material / assessment development", detail:"Samples, versions, approvals, impact" },
+          { id:"guest_lectures", label:"Guest lectures / workshops / field trips (last 4 semesters)", detail:"Invites, photos, agendas, feedback" },
+          { id:"industry_materials", label:"Industry co-developed course materials (last 3 years)", detail:"Co-authored materials, emails, adoption evidence" },
+          { id:"apprenticeship_outcomes", label:"Apprenticeship / industry-based course outcomes (last 3 years)", detail:"Evidence of outcomes and links to industry" },
+          { id:"student_projects_impact", label:"Student projects with evidence of impact", detail:"Presentations, adoption, competitions, publications, tools, etc." },
+          { id:"cpd_3y", label:"CPD activities (last 3 years)", detail:"Certificates, agendas, reflections" },
+          { id:"sabbatical", label:"Sabbatical outcomes (if applicable)", detail:"Report, outputs, evidence" },
+          { id:"cert_renewals", label:"Professional certifications / renewals (last 3 years)", detail:"Certificates, validity dates" },
+          { id:"cars", label:"Endorsed Course Assessment Reports (CARs) (last 4 semesters)", detail:"Endorsed copies" },
+          { id:"course_files", label:"Course file completeness confirmations / feedback from leaders", detail:"Emails, sign-offs, reports" },
+        ]
+      },
+      {
+        id: "research",
+        title: "4. PART B: Applied Research & Scholarship (Senior Lecturer Level)",
+        subtitle: "Outputs + proof (links, DOIs, certificates, acceptance letters)",
+        items: [
+          { id:"publication", label:"At least 1 peer-reviewed international publication", detail:"First/corresponding author OR industry-adopted policy/white paper" },
+          { id:"conference", label:"Conference / professional engagement", detail:"1 indexed international conference OR 2 trade events/summits (last 3 years)" },
+          { id:"case_study", label:"Joint industry case study or book chapter", detail:"First or second author" },
+          { id:"mentoring", label:"Evidence of student mentoring", detail:"Students presenting applied/practice-based work" },
+          { id:"copies_links", label:"Copies/links of publications & conference evidence", detail:"Certificates, acceptance letters, programs, URLs" },
+        ]
+      },
+      {
+        id: "service",
+        title: "5. PART C: Service – Evidence Folder",
+        subtitle: "Every claim must have evidence (letters, emails, certificates, programs, reports)",
+        items: [
+          { id:"committees", label:"Committee memberships", detail:"HCT/division/campus/national/international" },
+          { id:"pd_led", label:"Professional development sessions led or organised", detail:"Agenda, invite, attendance, feedback" },
+          { id:"event_org", label:"Academic or professional event organisation", detail:"Role, outputs, evidence" },
+          { id:"interdisciplinary", label:"Interdisciplinary collaboration projects", detail:"Partners, outputs, impact" },
+          { id:"memberships", label:"Professional organisation memberships", detail:"Proof of membership and dates" },
+          { id:"admin_roles", label:"Administrative roles (taskforces, SCTL, initiatives, etc.)", detail:"Appointment emails, TORs, outputs" },
+          { id:"accreditation", label:"Accreditation / quality assurance contributions", detail:"Reports, meeting minutes, outputs" },
+          { id:"student_success", label:"Student success initiatives", detail:"At-risk, employability, awards" },
+          { id:"alumni", label:"Alumni engagement activities", detail:"Events, communications, outcomes" },
+        ]
+      },
+      {
+        id: "enhancers",
+        title: "6. Optional but Strong Enhancers",
+        subtitle: "Nice-to-have, but they can seriously boost your case",
+        items: [
+          { id:"awards", label:"Awards / recognitions", detail:"Certificates, announcements, citations" },
+          { id:"initiatives", label:"Institutional initiatives (AI, innovation, employability, system-wide impact)", detail:"Evidence of contribution + impact" },
+          { id:"extra", label:"Any additional relevant evidence supporting promotion readiness", detail:"Anything credible that strengthens the narrative" },
+        ]
+      },
+      {
+        id: "final",
+        title: "7. Final Submission Checks",
+        subtitle: "Before you hit submit… the boring part that saves your life",
+        items: [
+          { id:"uploaded", label:"All sections uploaded digitally", detail:"Check file names + correct folders" },
+          { id:"pef", label:"PEF complete and clearly labelled", detail:"Consistent naming, easy to navigate" },
+          { id:"signoff", label:"Ready for Division Chair sign-off on completeness", detail:"No missing evidence; clean structure" },
+        ]
+      }
+    ];
+
+    const STORAGE_KEY = "senior_lecturer_checklist_v1";
+    const defaultState = { version: 1, items: {} };
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return structuredClone(defaultState);
+        const s = JSON.parse(raw);
+        if(!s || typeof s !== "object") return structuredClone(defaultState);
+        if(!s.items) s.items = {};
+        return s;
+      }catch(e){
+        return structuredClone(defaultState);
+      }
+    }
+    function saveState(state){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      pulseSaved();
+    }
+
+    let state = loadState();
+
+    const sectionsEl = document.getElementById("sections");
+    const doneCountEl = document.getElementById("doneCount");
+    const totalCountEl = document.getElementById("totalCount");
+    const pctEl = document.getElementById("pct");
+    const barFill = document.getElementById("barFill");
+    const savedStatus = document.getElementById("savedStatus");
+    const searchEl = document.getElementById("search");
+
+    const noteDialog = document.getElementById("noteDialog");
+    const noteTitle = document.getElementById("noteTitle");
+    const noteText = document.getElementById("noteText");
+    const closeDialog = document.getElementById("closeDialog");
+    const saveNoteBtn = document.getElementById("saveNote");
+    const deleteNoteBtn = document.getElementById("deleteNote");
+
+    const importDialog = document.getElementById("importDialog");
+    const importText = document.getElementById("importText");
+    const closeImport = document.getElementById("closeImport");
+    const doImport = document.getElementById("doImport");
+
+    let currentNoteItemId = null;
+
+    function pulseSaved(){
+      savedStatus.textContent = "Saved ✓";
+      savedStatus.style.color = "var(--accent2)";
+      clearTimeout(pulseSaved._t);
+      pulseSaved._t = setTimeout(()=>{
+        savedStatus.textContent = "Saved ✓";
+        savedStatus.style.color = "var(--muted)";
+      }, 700);
+    }
+
+    function getItemState(itemId){
+      if(!state.items[itemId]){
+        state.items[itemId] = { done:false, note:"" };
+      }
+      return state.items[itemId];
+    }
+
+    function setItemDone(itemId, done){
+      const st = getItemState(itemId);
+      st.done = !!done;
+      saveState(state);
+      renderStats();
+      applyTaskDoneClass(itemId);
+      updateSectionCounts();
+    }
+
+    function setItemNote(itemId, note){
+      const st = getItemState(itemId);
+      st.note = note || "";
+      saveState(state);
+      updateNoteBox(itemId);
+    }
+
+    function render(){
+      sectionsEl.innerHTML = "";
+      for(const sec of DATA){
+        const details = document.createElement("details");
+        details.className = "section";
+        details.setAttribute("data-section", sec.id);
+        details.open = true;
+
+        const summary = document.createElement("summary");
+
+        const left = document.createElement("div");
+        left.className = "sec-title";
+        left.innerHTML = `<strong>${sec.title}</strong><span>${sec.subtitle}</span>`;
+
+        const right = document.createElement("div");
+        right.className = "sec-count";
+        right.innerHTML = `<span class="pill" id="sec-${sec.id}-count">0/0</span>`;
+
+        summary.appendChild(left);
+        summary.appendChild(right);
+
+        const tasks = document.createElement("div");
+        tasks.className = "tasks";
+
+        for(const item of sec.items){
+          const st = getItemState(item.id);
+
+          const row = document.createElement("div");
+          row.className = "task" + (st.done ? " done" : "");
+          row.dataset.itemId = item.id;
+
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = !!st.done;
+          cb.addEventListener("change", () => setItemDone(item.id, cb.checked));
+
+          const mid = document.createElement("div");
+          mid.innerHTML = `
+            <div class="task-title"><strong>${item.label}</strong></div>
+            <div class="task-meta"><span>${escapeHtml(item.detail)}</span></div>
+            <div class="note-box ${st.note ? "show" : ""}" id="note-box-${item.id}">${escapeHtml(st.note || "")}</div>
+          `;
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+          const noteBtn = document.createElement("button");
+          noteBtn.className = "mini note";
+          noteBtn.textContent = st.note ? "Edit note" : "Add note";
+          noteBtn.addEventListener("click", () => openNote(item.id, item.label));
+
+          const clearBtn = document.createElement("button");
+          clearBtn.className = "mini clear";
+          clearBtn.textContent = "Clear";
+          clearBtn.title = "Untick + remove note";
+          clearBtn.addEventListener("click", () => {
+            const ok = confirm("Clear this item (untick + delete note)?");
+            if(!ok) return;
+            setItemDone(item.id, false);
+            setItemNote(item.id, "");
+            row.querySelector("input[type=checkbox]").checked = false;
+            noteBtn.textContent = "Add note";
+          });
+
+          actions.appendChild(noteBtn);
+          actions.appendChild(clearBtn);
+
+          row.appendChild(cb);
+          row.appendChild(mid);
+          row.appendChild(actions);
+
+          tasks.appendChild(row);
+        }
+
+        details.appendChild(summary);
+        details.appendChild(tasks);
+        sectionsEl.appendChild(details);
+      }
+
+      renderStats();
+      updateSectionCounts();
+      applySearchFilter();
+    }
+
+    function renderStats(){
+      const allItemIds = DATA.flatMap(s => s.items.map(i => i.id));
+      const total = allItemIds.length;
+      let done = 0;
+      for(const id of allItemIds){
+        if(getItemState(id).done) done++;
+      }
+      const pct = total ? Math.round((done/total)*100) : 0;
+      doneCountEl.textContent = done;
+      totalCountEl.textContent = total;
+      pctEl.textContent = pct;
+      barFill.style.width = pct + "%";
+    }
+
+    function updateSectionCounts(){
+      for(const sec of DATA){
+        const ids = sec.items.map(i => i.id);
+        const total = ids.length;
+        const done = ids.filter(id => getItemState(id).done).length;
+        const el = document.getElementById(`sec-${sec.id}-count`);
+        if(el) el.textContent = `${done}/${total}`;
+      }
+    }
+
+    function applyTaskDoneClass(itemId){
+      const row = sectionsEl.querySelector(`.task[data-item-id="${cssEscape(itemId)}"]`);
+      if(!row) return;
+      row.classList.toggle("done", !!getItemState(itemId).done);
+      const noteBtn = row.querySelector(".mini.note");
+      if(noteBtn) noteBtn.textContent = getItemState(itemId).note ? "Edit note" : "Add note";
+    }
+
+    function updateNoteBox(itemId){
+      const box = document.getElementById(`note-box-${itemId}`);
+      if(!box) return;
+      const note = getItemState(itemId).note || "";
+      box.textContent = note;
+      box.classList.toggle("show", !!note);
+      applyTaskDoneClass(itemId);
+    }
+
+    function openNote(itemId, label){
+      currentNoteItemId = itemId;
+      noteTitle.textContent = `Notes: ${label}`;
+      noteText.value = getItemState(itemId).note || "";
+      noteDialog.showModal();
+      noteText.focus();
+    }
+
+    closeDialog.addEventListener("click", () => noteDialog.close());
+    saveNoteBtn.addEventListener("click", () => {
+      if(!currentNoteItemId) return noteDialog.close();
+      setItemNote(currentNoteItemId, noteText.value.trim());
+      noteDialog.close();
+    });
+    deleteNoteBtn.addEventListener("click", () => {
+      if(!currentNoteItemId) return noteDialog.close();
+      const ok = confirm("Delete this note?");
+      if(!ok) return;
+      setItemNote(currentNoteItemId, "");
+      noteDialog.close();
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const payload = JSON.stringify(state, null, 2);
+      const blob = new Blob([payload], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "senior_lecturer_checklist_progress.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("importBtn").addEventListener("click", () => {
+      importText.value = "";
+      importDialog.showModal();
+      importText.focus();
+    });
+    closeImport.addEventListener("click", () => importDialog.close());
+    doImport.addEventListener("click", () => {
+      try{
+        const incoming = JSON.parse(importText.value);
+        if(!incoming || typeof incoming !== "object" || !incoming.items) throw new Error("Invalid JSON structure");
+        state = { version: 1, items: incoming.items };
+        saveState(state);
+        importDialog.close();
+        render();
+      }catch(e){
+        alert("Import failed: " + e.message);
+      }
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      const ok = confirm("Reset EVERYTHING (all ticks + notes)?");
+      if(!ok) return;
+      state = structuredClone(defaultState);
+      saveState(state);
+      render();
+    });
+
+    document.getElementById("expandAll").addEventListener("click", () => {
+      document.querySelectorAll("details.section").forEach(d => d.open = true);
+    });
+    document.getElementById("collapseAll").addEventListener("click", () => {
+      document.querySelectorAll("details.section").forEach(d => d.open = false);
+    });
+
+    searchEl.addEventListener("input", applySearchFilter);
+
+    function applySearchFilter(){
+      const q = (searchEl.value || "").trim().toLowerCase();
+      const rows = sectionsEl.querySelectorAll(".task");
+      rows.forEach(row => {
+        if(!q){
+          row.style.display = "";
+          return;
+        }
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(q) ? "" : "none";
+      });
+
+      document.querySelectorAll("details.section").forEach(sec => {
+        const visible = Array.from(sec.querySelectorAll(".task")).some(t => t.style.display !== "none");
+        sec.style.display = visible ? "" : "none";
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+    function cssEscape(s){
+      return String(s).replaceAll('"','\\"');
+    }
+
+    render();
+  </script>
+</body>
+</html>
